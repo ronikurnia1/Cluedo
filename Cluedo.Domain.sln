@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32113.165
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cluedo.Domain", "Cluedo.Domain\Cluedo.Domain.csproj", "{052368F1-42E5-4867-A194-6E909E18BBB2}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cluedo.Domain.UnitTest", "Cluedo.Domain.UnitTest\Cluedo.Domain.UnitTest.csproj", "{01ED4C97-BEC1-4B35-A53A-B2BF67CFD5BE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{052368F1-42E5-4867-A194-6E909E18BBB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{052368F1-42E5-4867-A194-6E909E18BBB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{052368F1-42E5-4867-A194-6E909E18BBB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{052368F1-42E5-4867-A194-6E909E18BBB2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{01ED4C97-BEC1-4B35-A53A-B2BF67CFD5BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01ED4C97-BEC1-4B35-A53A-B2BF67CFD5BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01ED4C97-BEC1-4B35-A53A-B2BF67CFD5BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01ED4C97-BEC1-4B35-A53A-B2BF67CFD5BE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CAA6D7FC-FF29-41FB-8651-AFBEBADFAFBC}
+	EndGlobalSection
+EndGlobal

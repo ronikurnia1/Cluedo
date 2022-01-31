@@ -1,0 +1,44 @@
+﻿.remove-pading-top {
+    padding-top: 0;
+}
+
+.drop-zone {
+    border-radius: 4px 4px;
+    padding: 10px;
+    /*border: 1px solid gray;*/
+    background: #2E828A;
+    background: -webkit-linear-gradient(bottom, #2E828A, #2C287B);
+    background: -moz-linear-gradient(bottom, #2E828A, #2C287B);
+    background: linear-gradient(to top, #2E828A, #2C287B);
+}
+
+.drop-zone-area {
+    padding-top: 10px;
+    min-height: 225px;
+}
+
+.sticky-top {
+    position: sticky;
+    z-index: 1;
+    justify-content: flex-end;
+    display: flex;
+    background-color: #0B6563;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.sticky-log {
+    border-radius: 4px 4px;
+    top: 320px;
+    position: sticky;
+    z-index: 1;
+    justify-content: flex-end;
+    display: flex;
+    background-color: #757575;
+}
+
+.log-scrollable {
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: 400px;
+}

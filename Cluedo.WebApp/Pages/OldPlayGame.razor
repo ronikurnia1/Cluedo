@@ -1,0 +1,362 @@
+﻿@page "/games/{gameId}/players/{playerId}"
+@inject IGameService GameService
+@implements IDisposable
+@inject IToaster Toaster
+
+<div class="row g-0 sticky-top bg-white">
+    <div class="col-5 drop-zone">
+        <div>Card Dropzone</div>
+        <div class="row g-1 drop-zone-area" dropzone="move" ondragover="event.preventDefault();" @ondrop="DroppedCard">
+            @foreach (PlayerCard playerCard in DroppedCards)
+            {
+                <CardView  State=@playerCard OnUndropped="@RemoveDroppedCard" />
+            }
+        </div>
+    </div>
+    <div class="col-2 card-body">
+        <button type="button" hidden="@(!OnAskClue)" class="btn btn-primary btn-block" @onclick="AskClue">Ask for clue</button>
+        <button type="button" hidden="@(!OnGiveClue)" class="btn btn-success btn-block" @onclick="GiveClue">Give a clue</button>
+        <button type="button" hidden="@(!OnHaveNoClue)" class="btn btn-success btn-block" @onclick="HaveNoClue">Have no clue</button>
+        <button type="button" hidden="@(!OnNoticeClue)" class="btn btn-success btn-block" @onclick="NoticeClue">Notice a clue</button>
+        <button type="button" hidden="@(!OnAskClue)" class="btn btn-danger btn-block" @onclick="Accuse">Accuse</button>
+    </div>
+    <div class="col-5 response-zone @ResponseZoneClass">
+
+        @if (player != null)
+        {
+            <div>@player.State.Note</div>
+        }
+
+        <div class="row">
+            @foreach (CardState card in CardsOnQuestion)
+            {
+                string imageLink = $"img/{card.No}.svg";
+                <div class="card text-center" style="width: 8rem;">
+                    <img src="@imageLink" class="card-img-top">
+                    <div class="card-footer">
+                        <div class="card-text-small">@card.Name (@card.CardType.ToString())</div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    <div><h5>Your cards</h5></div>
+    <div class="row g-2">
+        @foreach (PlayerCardState cardState in OnHandCards)
+        {
+            <Card State=@cardState OnDragStart="@DraggingCard" />
+        }
+    </div>
+</div>
+
+<div class="content">
+    <div><h5>Actor</h5></div>
+    <div class="row">
+        @foreach (PlayerCardState card in ActorCards)
+        {
+            string imageLink = $"img/{card.Card.No}.svg";
+            <div class="card text-center" style="width: 8rem;" @ondragstart='()=> DraggingCard(card)'>
+                @if (card.IsEliminated)
+                {
+                    <img src="@imageLink" class="card-img-top img-eliminated">
+                }
+                else
+                {
+                    <img src="@imageLink" class="card-img-top">
+                }
+                <div class="card-footer" @onclick="(()=> ToggleCard(card.Card.No))">
+                    <div class="card-text-small">@card.Card.Name (@card.Card.CardType.ToString())</div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="content">
+    <div><h5>Place</h5></div>
+    <div class="row">
+        @foreach (PlayerCardState cardState in PlaceCards)
+        {
+            string imageLink = $"img/{cardState.Card.No}.svg";
+            <div class="card text-center" style="width: 8rem;" @ondragstart='()=> DraggingCard(cardState)'>
+                @if (cardState.IsEliminated)
+                {
+                    <img src="@imageLink" class="card-img-top img-eliminated">
+                }
+                else
+                {
+                    <img src="@imageLink" class="card-img-top">
+                }
+                <div class="card-footer" @onclick="(()=> ToggleCard(cardState.Card.No))">
+                    <div class="card-text-small">@cardState.Card.Name (@cardState.Card.CardType.ToString())</div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="content">
+    <div><h5>Weapon</h5></div>
+    <div class="row">
+        @foreach (PlayerCardState cardState in WeaponCards)
+        {
+            string imageLink = $"img/{cardState.Card.No}.svg";
+            <div class="card text-center" style="width: 8rem;" @ondragstart='()=> DraggingCard(cardState)'>
+                @if (cardState.IsEliminated)
+                {
+                    <img src="@imageLink" class="card-img-top img-eliminated">
+                }
+                else
+                {
+                    <img src="@imageLink" class="card-img-top">
+                }
+                <div class="card-footer" @onclick="(()=> ToggleCard(cardState.Card.No))">
+                    <div class="card-text-small">@cardState.Card.Name (@cardState.Card.CardType.ToString())</div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string GameId { get; set; } = string.Empty;
+    [Parameter]
+    public string PlayerId { get; set; } = string.Empty;
+
+    private Player? player;
+    private Cluedo.Domain.Game? game;
+
+
+    private List<PlayerCard> DroppedCards { get; set; }
+
+
+    //protected bool OnAskClue
+    //{
+    //    get
+    //    {
+    //        if (player == null) return false;
+    //        return player.State.PlayingState == PlayingStates.AskClue;
+    //    }
+    //}
+
+    //protected bool OnGiveClue
+    //{
+    //    get
+    //    {
+    //        if (player == null) return false;
+    //        return player.State.PlayingState == PlayingStates.GiveClue
+    //            && player.State.Cards.Any(c => c.IsCardInQuestion);
+    //    }
+    //}
+
+    //protected bool OnHaveNoClue
+    //{
+    //    get
+    //    {
+    //        if (player == null) return false;
+    //        return player.State.PlayingState == PlayingStates.GiveClue
+    //            && player.State.Cards.All(c => c.IsCardInQuestion == false);
+    //    }
+    //}
+
+    //protected bool OnNoticeClue
+    //{
+    //    get
+    //    {
+    //        if (player == null) return false;
+    //        return player.State.PlayingState == PlayingStates.NoticeClue;
+    //    }
+    //}
+
+    //protected List<CardState> CardsOnQuestion { get; set; } = new();
+
+    //protected List<PlayerCardState> OnHandCards { get; set; } = new();
+
+    //protected List<PlayerCardState> ActorCards
+    //{
+    //    get
+    //    {
+    //        if (player == null) return new();
+    //        return player.State.Cards.Where(c => c.IsOnHandCard == false
+    //        && c.Card.CardType == CardTypes.Actor).ToList();
+    //    }
+    //}
+    //protected List<PlayerCardState> PlaceCards
+    //{
+    //    get
+    //    {
+    //        if (player == null) return new();
+    //        return player.State.Cards.Where(c => c.IsOnHandCard == false
+    //            && c.Card.CardType == CardTypes.Place).ToList();
+    //    }
+    //}
+    //protected List<PlayerCardState> WeaponCards
+    //{
+    //    get
+    //    {
+    //        if (player == null) return new();
+    //        return player.State.Cards.Where(c => c.IsOnHandCard == false
+    //            && c.Card.CardType == CardTypes.Weapon).ToList();
+    //    }
+    //}
+
+    //protected List<PlayerCardState> DroppedCards { get; set; } = new();
+
+    //private PlayerCardState? draggedCard { get; set; }
+
+    //private void DraggingCard(PlayerCardState state)
+    //{
+    //    draggedCard = state;
+    //}
+
+    //protected void DroppedCard()
+    //{
+    //    if (DroppedCards.Count < 3 && draggedCard != null
+    //        && DroppedCards.All(c => c.Card.No != draggedCard.Card.No))
+    //    {
+    //        draggedCard.IsDropped = true;
+    //        DroppedCards.Add(draggedCard);
+    //        draggedCard = null;
+    //    }
+    //}
+
+    //protected void RemoveDroppedCard(PlayerCardState state)
+    //{
+    //    DroppedCards.Remove(state);
+    //}
+
+    //protected string ResponseZoneClass
+    //{
+    //    get
+    //    {
+    //        if (gameState == null) return "wait-clue";
+    //        string responseClass = string.Empty;
+    //        switch (gameState.CurrentClue)
+    //        {
+    //            case ClueTypes.HasClue:
+    //                responseClass = "has-clue";
+    //                break;
+    //            case ClueTypes.NoClue:
+    //                responseClass = "has-no-clue";
+    //                break;
+    //            case ClueTypes.WaitForClue:
+    //                responseClass = "wait-clue";
+    //                break;
+    //        }
+    //        return responseClass;
+    //    }
+    //}
+
+    //protected void AskClue()
+    //{
+    //    if (DroppedCards.Count == 3)
+    //    {
+    //        try
+    //        {
+    //            player.AskForClue(DroppedCards.Select(c => c.Card).ToList());
+    //            Toaster.Success("Ask clue successfully submitted.", "Ask a clue");
+    //            DroppedCards.Clear();
+    //        }
+    //        catch (Exception e)
+    //        {
+    //            Toaster.Warning(e.Message, "Ask a clue");
+    //        }
+    //    }
+    //    else
+    //    {
+    //        Toaster.Info("Please drop 3 cards into Dropzone", "Ask a clue");
+    //    }
+    //}
+
+
+    //protected void GiveClue()
+    //{
+    //    if (DroppedCards.Count == 1)
+    //    {
+    //        try
+    //        {
+    //            player.GiveClue(DroppedCards.First().Card);
+    //            Toaster.Success("Give a clue successfully submitted.", "Give a clue");
+    //            DroppedCards.Clear();
+    //        }
+    //        catch (Exception e)
+    //        {
+    //            Toaster.Warning(e.Message, "Give a clue");
+    //        }
+    //    }
+    //    else
+    //    {
+    //        Toaster.Info("Please drop 1 same cards into Dropzone", "Give a clue");
+    //    }
+    //}
+
+    //protected void HaveNoClue()
+    //{
+    //    player.GiveNoClue();
+    //    Toaster.Success("Give no clue successfully submitted.", "Give a clue");
+    //}
+
+    //protected void NoticeClue()
+    //{
+    //    player.NoticeClue();
+    //    Toaster.Success("Notice clue successfully submitted.", "Notice a clue");
+    //}
+
+    //protected void Accuse()
+    //{
+    //    if (DroppedCards.Count == 3)
+    //    {
+    //        try
+    //        {
+    //            player.Accuse(DroppedCards.Select(c => c.Card.No).ToList());
+    //            Toaster.Success("Accuse successfully submitted.", "Accuse");
+    //            DroppedCards.Clear();
+    //        }
+    //        catch (Exception e)
+    //        {
+    //            Toaster.Warning(e.Message, "Accuse");
+    //        }
+    //    }
+    //    else
+    //    {
+    //        Toaster.Info("Please drop 3 cards into Dropzone", "Accuse");
+    //    }
+    //}
+
+    //protected void ToggleCard(int cardNo)
+    //{
+    //    // get cards
+    //    var card = player.State.Cards.First(c => c.Card.No == cardNo);
+    //    new PlayerCard(card).Eliminate(!card.IsEliminated);
+    //}
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        game = GameService.GetGame(GameId);
+        if (game != null)
+        {
+            player = game.Players.FirstOrDefault(p => p.Id == PlayerId);
+            game.StateChangedEvent += StateChangedHandler;
+        }
+    }
+
+    public void Dispose()
+    {
+        if (game != null)
+        {
+            game.StateChangedEvent -= StateChangedHandler;
+        }
+    }
+
+    private void StateChangedHandler(object? sender, EventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+}

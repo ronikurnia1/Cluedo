@@ -1,0 +1,28 @@
+﻿.game-card {
+    position: relative;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.5);
+    transition: 0.3s;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+    .game-card:hover {
+        box-shadow: 0 8px 16px 8px rgba(0,0,0,0.5);
+    }
+
+.card-eliminated {
+    filter: invert(70%) grayscale(100%) sepia(80%) saturate(100%) hue-rotate(87deg) brightness(50%) contrast(80%);
+}
+
+.top-right {
+    position: absolute;
+    right: 0;
+    top: 0;
+    float: right;
+    color: red;
+    cursor: pointer;
+}
+
+.clue-card {
+    border: 5px solid red;
+}

@@ -1,0 +1,31 @@
+﻿@page "/games"
+@inject IGameService GameService
+
+<div class="row">
+    <div class="col-8">
+        <h3>Game List</h3>
+        <button class="btn btn-primary" @onclick="CreateNewGame">Create new game</button>
+        <ul class="nav flex-column">
+            @foreach (Cluedo.Domain.Game game in GameService.Games)
+            {
+                string link = $"games/{game.Id}";
+                <li class="nav-item">
+                    <a class="nav-link" href="@link" target="_self">
+                        <span class="oi oi-person" aria-hidden="true"></span> @game.Id
+                    </a>
+                </li>
+            }
+        </ul>
+    </div>
+    <div class="col-4">
+    </div>
+</div>
+
+@code {
+    protected async Task CreateNewGame()
+    {
+        var game = GameService.CreateNewGame();
+        await InvokeAsync(StateHasChanged);
+        await Task.CompletedTask;
+    }
+}

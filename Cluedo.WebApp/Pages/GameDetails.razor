@@ -1,0 +1,93 @@
+﻿@page "/games/{gameId}"
+@inject IGameService GameService
+@inject ILocalStorageService LocalStorage
+@inject NavigationManager navigation
+@implements IDisposable
+
+<div class="row">
+    <div class="col-8">
+        <h3>Game: @GameId</h3>
+        <ul class="nav flex-column">
+            @if (game != null)
+            {
+                foreach (Player player in game.Players)
+                {
+                    <li class="nav-item">
+                        @if (playerId == player.Id)
+                        {
+                            string link = $"games/{GameId}/players/{player.Id}";
+                            <a class="nav-link" href="@link" target="_self">
+                                <span class="oi oi-person" aria-hidden="true"></span> @player.Name
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="oi oi-person" aria-hidden="true"></span> @player.Name
+                        }
+                    </li>
+                }
+            }
+        </ul>
+        @if (game != null && game.Players.Count < 4 && game.Players.Count(p => p.Id == playerId) == 0)
+        {
+            <div class="content">
+                <EditForm Model="model" OnValidSubmit="Join" class="form">
+                    <div class="form-group">
+                        <InputText placeholder="Player name" @bind-Value="model.Name" class="form-control" />
+                    </div>
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Join</button>
+                    </div>
+                </EditForm>
+            </div>
+        }
+    </div>
+    <div class="col-4">
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string GameId { get; set; } = string.Empty;
+
+    private RegistrationModel model = new RegistrationModel();
+
+    private Game? game;
+    private string playerId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        game = GameService.GetGame(GameId);
+
+        //List<string> players = new() { "Player1", "Player2", "Player3", "Player4" };
+        //players.ForEach(i => game?.RegisterPlayer(i));
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        playerId = await LocalStorage.GetItemAsync<string>("PlayerId");
+        await InvokeAsync(StateHasChanged);
+    }
+
+
+    public async Task Join()
+    {
+        if (game != null)
+        {
+            string playerId = game.RegisterPlayer(model.Name);
+            await LocalStorage.SetItemAsync("PlayerId", playerId);
+            await LocalStorage.SetItemAsync("GameId", GameId);
+            model.Name = string.Empty;
+
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+
+    }
+}

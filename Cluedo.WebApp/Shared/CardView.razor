@@ -1,0 +1,48 @@
+﻿
+<div class="@Size">
+    <div class="game-card" @ondblclick="ToggleCard">
+        @if (Card.Location == CardLocations.DroppedZone)
+        {
+            <span class="top-right oi oi-circle-x" aria-hidden="true" @onclick="Undropped"></span>
+            <img draggable="true" src="@Card.Image" alt="Avatar" style="width:100%" />
+        }
+        else
+        {
+            <img draggable="true" src="@Card.Image" alt="Avatar" class="@Card.State.EliminatedClass @Card.State.ClueCardClass"
+             style="width:100%" @ondragstart="DragStart" />
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public CardModel Card { get; set; }
+    [Parameter]
+    public string Size { get; set; } = "col-2";
+    [Parameter]
+    public EventCallback<CardModel> OnDragStart { get; set; }
+    [Parameter]
+    public EventCallback<CardModel> OnCardChange { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    private async Task DragStart()
+    {
+        await OnDragStart.InvokeAsync(Card);
+    }
+
+    private async Task Undropped()
+    {
+        Card.Undrop();
+        await OnCardChange.InvokeAsync(Card);
+    }
+
+    private async Task ToggleCard()
+    {
+        Card.State.Eliminate(!Card.State.IsEliminated);
+        await OnCardChange.InvokeAsync(Card);
+    }
+}

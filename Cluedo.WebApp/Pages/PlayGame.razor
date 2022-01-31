@@ -1,0 +1,265 @@
+﻿@page "/games/{gameId}/players/{playerId}"
+@using System.Timers
+@inject IGameService GameService
+@implements IDisposable
+@inject IToaster Toaster
+@layout GameLayout
+@inject NavigationManager NavigationManager
+
+<article class="content ps-5 pe-5 remove-pading-top">
+    <div class="row sticky-top">
+        <div class="col-4 drop-zone">
+            <h5>Card Dropzone</h5>
+            <div class="row g-2 drop-zone-area" ondragover="event.preventDefault();" @ondrop="DroppedCard">
+                @foreach (CardModel card in PlayingCards.Where(c => c.Location == CardLocations.DroppedZone))
+                {
+                    <CardView Card="@card" Size="col-4" OnCardChange="@CardChange" />
+                }
+            </div>
+        </div>
+        <div class="col-4 action-button">
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-light" disabled="@(!CanAskForClue)" @onclick="AskForClue">
+                    Ask for clue
+                </button>
+                <button type="button" class="btn btn-light" disabled="@(!CanGiveClue)" @onclick="GiveClue">
+                    Give a clue
+                </button>
+                <button type="button" class="btn btn-light" disabled="@(!CanHaveNoClue)" @onclick="HaveNoClue">
+                    Have no clue
+                </button>
+                <button type="button" class="btn btn-light" disabled="@(!CanConfirmClue)" @onclick="ConfirmClue">
+                    Confirm a clue
+                </button>
+                <button type="button" class="btn btn-danger" disabled="@(!CanAccuse)" @onclick="Accuse">
+                    Accuse
+                </button>
+                <button type="button" class="btn btn-warning" @onclick="GoToHome">
+                    Home
+                </button>
+            </div>
+        </div>
+        <div class="col-4 drop-zone">
+            <h5>Cards in question</h5>
+            <div class="row g-2 drop-zone-area">
+                @if (game != null)
+                {
+                    @foreach (Card card in game.CurrentQuestionCards)
+                    {
+                        CardModel cardModel = new CardModel(new PlayingCard(card, PlayingTypes.Suspect));
+                        <CardView Card="@cardModel" Size="col-4" OnCardChange="@CardChange" />
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row pb-3 g-4">
+        <div class="col-8">
+            <div class="row g-0 pb-3">
+                <div><h5>Your cards</h5></div>
+                <div class="col-12">
+                    <div class="row g-2">
+                        @foreach (CardModel card in PlayingCards.Where(c => c.Location == CardLocations.OnHandZone))
+                        {
+                            <CardView Card="@card" Size="col-2" OnCardChange="@CardChange" OnDragStart="@DraggingCard" />
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="row g-0 pb-3">
+                <div><h5>Suspect: Actor</h5></div>
+                <div class="col-12">
+                    <div class="row g-2">
+                        @foreach (CardModel card in PlayingCards.Where(c => c.Location == CardLocations.ActorZone))
+                        {
+                            <CardView Card="@card" Size="col-2" OnCardChange="@CardChange" OnDragStart="@DraggingCard" />
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="row g-0 pb-3">
+                <div><h5>Suspect: Weapon</h5></div>
+                <div class="col-12">
+                    <div class="row g-2">
+                        @foreach (CardModel card in PlayingCards.Where(c => c.Location == CardLocations.WeaponZone))
+                        {
+                            <CardView Card="@card" Size="col-2" OnCardChange="@CardChange" OnDragStart="@DraggingCard" />
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="row g-0 pb-3">
+                <div><h5>Suspect: Place</h5></div>
+                <div class="col-12">
+                    <div class="row g-2">
+                        @foreach (CardModel card in PlayingCards.Where(c => c.Location == CardLocations.PlaceZone))
+                        {
+                            <CardView Card="@card" Size="col-2" OnCardChange="@CardChange" OnDragStart="@DraggingCard" />
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="row sticky-log">
+                <div class="col-12 log-scrollable">
+                    <ul>
+                        @if (player != null && player.GameInfo != null)
+                        {
+                            int index = 0;
+                            foreach (string item in player.GameInfo.Reverse())
+                            {
+                                if (index == 0)
+                                {
+                                    <li style="color: orange"><b>@item</b></li>
+                                }
+                                else
+                                {
+                                    <li>@item</li>
+                                }
+                                index += 1;
+                            }
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</article>
+
+@code {
+
+    [Parameter]
+    public string GameId { get; set; } = string.Empty;
+    [Parameter]
+    public string PlayerId { get; set; } = string.Empty;
+
+    private Player? player;
+    private Game? game;
+    private System.Timers.Timer timer = new(7000);
+
+    private CardModel? draggedCard { get; set; } = null;
+    private List<CardModel> PlayingCards { get; set; } = new();
+
+    private bool CanAskForClue =>
+    PlayingCards.Count(c => c.Location == CardLocations.DroppedZone) == 3
+    && player?.State == PlayingStates.AskingForClue;
+
+    private bool CanGiveClue => player?.State == PlayingStates.GivingClue
+    && PlayingCards.Count(c => c.Location == CardLocations.DroppedZone) == 1;
+
+    private bool CanHaveNoClue => player?.State == PlayingStates.GivingClue
+    && PlayingCards.Count(c => c.State.IsClueCard) == 0;
+
+    private bool CanConfirmClue => player?.State == PlayingStates.ConfirmingClue;
+
+    private bool CanAccuse => player?.State == PlayingStates.AskingForClue
+    && PlayingCards.Count(c => c.Location == CardLocations.DroppedZone) == 3;
+
+    private void DraggingCard(CardModel card)
+    {
+        draggedCard = card;
+    }
+
+    private async Task CardChange()
+    {
+        //await InvokeAsync(StateHasChanged);
+        await Task.CompletedTask;
+    }
+
+    private async Task DroppedCard()
+    {
+        if (draggedCard != null
+            && PlayingCards.Count(c => c.Location == CardLocations.DroppedZone) < 3)
+        {
+            draggedCard.Drop();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task AskForClue()
+    {
+        player?.AskClue(PlayingCards.Where(c => c.Location == CardLocations.DroppedZone)
+        .Select(i => i.State));
+        PlayingCards.Where(c => c.Location == CardLocations.DroppedZone).ToList()
+        .ForEach(i => i.Undrop());
+        await Task.CompletedTask;
+    }
+
+    private async Task GiveClue()
+    {
+        var clueCard = PlayingCards.First(c => c.Location == CardLocations.DroppedZone);
+        player?.GiveClue(clueCard.State);
+        clueCard.Undrop();
+
+        await Task.CompletedTask;
+    }
+
+    private async Task HaveNoClue()
+    {
+        player?.GiveNoClue();
+        await Task.CompletedTask;
+    }
+
+    private async Task ConfirmClue()
+    {
+        player?.ConfirmClue();
+        await Task.CompletedTask;
+    }
+
+    private async Task Accuse()
+    {
+        var accuseCards = PlayingCards.Where(c => c.Location == CardLocations.DroppedZone).ToList();
+        player?.Accuse(accuseCards.Select(c => c.State.No));
+        accuseCards.ForEach(i => i.Undrop());
+        await Task.CompletedTask;
+    }
+
+    private async Task GoToHome()
+    {
+        NavigationManager.NavigateTo("/");
+        await Task.CompletedTask;
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        game = GameService.GetGame(GameId);
+        if (game != null)
+        {
+            player = game.Players.First(p => p.Id == PlayerId);
+
+            PlayingCards = player.Cards.Select(c => new CardModel(c)).ToList();
+            game.StateChangedEvent += StateChangedHandler;
+        }
+    }
+
+    public void Dispose()
+    {
+        if (game != null)
+        {
+            game.StateChangedEvent -= StateChangedHandler;
+        }
+    }
+
+    private void StateChangedHandler(object? sender, EventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+        if (player?.State == PlayingStates.Lose)
+        {
+            timer.Elapsed += ProceedTheGame;
+            timer.Start();
+        }
+    }
+
+    private void ProceedTheGame(object? sender, ElapsedEventArgs e)
+    {
+        timer.Stop();
+        timer.Elapsed -= ProceedTheGame;
+
+        game?.Proceed();
+    }
+}

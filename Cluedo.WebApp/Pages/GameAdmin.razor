@@ -1,0 +1,28 @@
+﻿@page "/admin"
+@inject IGameService GameService
+
+<div class="row">
+    <div class="col-8">
+        <h3>Game List</h3>
+        <ul class="nav flex-column">
+            @foreach (Cluedo.Domain.Game game in GameService.Games)
+            {
+                string link = $"games/{game.Id}";
+                <li class="nav-item">
+                    <span class="oi oi-person" aria-hidden="true"></span> @game.Id
+                    <button @onclick="()=>RemoveGame(game.Id)">Remove Game</button>
+                </li>
+            }
+        </ul>
+    </div>
+    <div class="col-4">
+    </div>
+</div>
+
+@code {
+    protected async Task RemoveGame(string gameId)
+    {
+        GameService.DemolishGame(gameId);
+        await InvokeAsync(StateHasChanged);
+    }
+}
