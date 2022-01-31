@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using System.Timers;
 
 namespace Cluedo.Domain;
 
@@ -36,7 +37,6 @@ public class Game : IDisposable
         if (players.Count == 4) StartGame();
         return player.Id;
     }
-
     public ReadOnlyCollection<Card> SecretEnvelope => secretEnvelope.AsReadOnly();
     public ReadOnlyCollection<Card> CurrentQuestionCards { get; private set; }
     public Player? CurrentAskingClue { get; private set; }
@@ -45,15 +45,23 @@ public class Game : IDisposable
     public ClueModes ClueMode { get; private set; }
     public ReadOnlyCollection<Player> Players => players.AsReadOnly();
 
+
     public event EventHandler<EventArgs>? StateChangedEvent;
 
-    public void Proceed()
+    public void RunWithMachine()
     {
-        NextPlayerTurnToAsk();
-        StateChangedEvent?.Invoke(this, EventArgs.Empty);
+        int numberOfMachine = 4 - players.Count;
+        for (int i = 1; i <= numberOfMachine; i++)
+        {
+            var playerId = RegisterPlayer($"Machine-{i}");
+            machines.Add(new(players.First(p => p.Id == playerId)));
+        }
     }
 
+
+
     private readonly List<Player> players = new();
+    private readonly List<MachinePlayer> machines = new();
 
     private Player CreateAndJoinPlayer(string playerName, int seqNo)
     {
@@ -114,12 +122,14 @@ public class Game : IDisposable
         Winner = null;
         // asign first player to ask 
         CurrentAskingClue = players.OrderBy(p => p.SequenceNo).First();
-        CurrentAskingClue.RequestToAction(PlayingStates.AskingForClue, "Your turn to ask a clue");
+        CurrentAskingClue.RequestToAction(PlayingStates.AskingForClue, "Your turn to ask a clue or accuse");
         ClueMode = ClueModes.WaitForClue;
         logger.LogInformation("Game started.");
+        logger.LogInformation("Player [{sequenceNo}]-[{playerName}] to ask for clue",
+            CurrentAskingClue?.SequenceNo, CurrentAskingClue?.Name);
 
         // tell the rest
-        string info = $"Please wait, {CurrentAskingClue.Name} turn to ask a clue";
+        string info = $"Please wait, {CurrentAskingClue?.Name} turn to ask a clue";
         List<Player> except = new();
         if (CurrentAskingClue != null) except.Add(CurrentAskingClue);
         BroadcastMessage(except, info);
@@ -229,7 +239,7 @@ public class Game : IDisposable
             $"Please wait if {CurrentGivingClue?.Name} has any clue");
 
         CurrentGivingClue?.RequestToAction(PlayingStates.GivingClue,
-            $"Please give {CurrentAskingClue?.Name} a clue you have");
+            $"Your turn, please give {CurrentAskingClue?.Name} a clue you have");
 
         // tell the rest
         string info = $"Watch out if {CurrentGivingClue?.Name}" +
@@ -318,7 +328,7 @@ public class Game : IDisposable
         logger.LogInformation("Player [{sequenceNo}]-[{playerName}] to ask for clue",
             CurrentAskingClue?.SequenceNo, CurrentAskingClue?.Name);
 
-        CurrentAskingClue?.RequestToAction(PlayingStates.AskingForClue, "Your turn to ask a clue");
+        CurrentAskingClue?.RequestToAction(PlayingStates.AskingForClue, "Your turn to ask a clue or accuse");
 
         List<Player> except = new();
         string info = $"Please wait, {CurrentAskingClue?.Name} turn to ask a clue";
@@ -362,8 +372,26 @@ public class Game : IDisposable
                 i => i.GiveGameInfo($"player {player?.Name} LOSES the game!"));
 
             StateChangedEvent?.Invoke(this, EventArgs.Empty);
+
+            var timer = new System.Timers.Timer(6000);
+            timer.Elapsed += ProceedTheGame;
+            timer.Start();
         }
     }
+
+
+    private void ProceedTheGame(object? sender, ElapsedEventArgs e)
+    {
+        if (sender is System.Timers.Timer timer)
+        {
+            timer.Stop();
+            timer.Elapsed -= ProceedTheGame;
+            timer.Dispose();
+        }
+        NextPlayerTurnToAsk();
+        StateChangedEvent?.Invoke(this, EventArgs.Empty);
+    }
+
 
     private void BroadcastMessage(IEnumerable<Player> except, string info)
     {

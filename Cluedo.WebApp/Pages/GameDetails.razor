@@ -4,47 +4,58 @@
 @inject NavigationManager navigation
 @implements IDisposable
 
-<div class="row">
-    <div class="col-8">
-        <h3>Game: @GameId</h3>
-        <ul class="nav flex-column">
-            @if (game != null)
-            {
-                foreach (Player player in game.Players)
+<div class="content">
+    <div class="row g-2">
+        <div class="col-12">
+            <h3>Game: @GameId</h3>
+            <ul class="nav flex-column">
+                @if (game != null)
                 {
-                    <li class="nav-item">
-                        @if (playerId == player.Id)
-                        {
-                            string link = $"games/{GameId}/players/{player.Id}";
-                            <a class="nav-link" href="@link" target="_self">
-                                <span class="oi oi-person" aria-hidden="true"></span> @player.Name
-                            </a>
-                        }
-                        else
-                        {
-                            <span class="oi oi-person" aria-hidden="true"></span> @player.Name
-                        }
-                    </li>
+                    foreach (Player player in game.Players)
+                    {
+                        <li class="nav-item">
+                            @if (playerId == player.Id)
+                            {
+                                string link = $"games/{GameId}/players/{player.Id}";
+                                <a class="nav-link" href="@link" target="_self">
+                                    <span class="oi oi-person" aria-hidden="true"></span> @player.Name (you)
+                                </a>
+                            }
+                            else
+                            {
+                                string link = $"games/{GameId}";
+                                <a class="nav-link" href="@link" target="_self">
+                                    <span class="oi oi-person" aria-hidden="true"></span> @player.Name
+                                </a>
+                            }
+                        </li>
+                    }
                 }
+            </ul>
+            @if (game != null && game.Players.Count < 4 && game.Players.Count(p => p.Id == playerId) == 0)
+            {
+                <div class="content">
+                    <EditForm Model="model" OnValidSubmit="Join" class="form">
+                        <div class="form-group">
+                            <InputText placeholder="Player name" @bind-Value="model.Name" class="form-control" />
+                        </div>
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <div class="form-group pt-3">
+                            <button type="submit" class="btn btn-primary">Join</button>
+                        </div>
+                    </EditForm>
+                </div>
             }
-        </ul>
-        @if (game != null && game.Players.Count < 4 && game.Players.Count(p => p.Id == playerId) == 0)
-        {
-            <div class="content">
-                <EditForm Model="model" OnValidSubmit="Join" class="form">
-                    <div class="form-group">
-                        <InputText placeholder="Player name" @bind-Value="model.Name" class="form-control" />
-                    </div>
-                    <DataAnnotationsValidator />
-                    <ValidationSummary />
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-primary">Join</button>
-                    </div>
-                </EditForm>
-            </div>
-        }
+        </div>
     </div>
-    <div class="col-4">
+    <div class="row g-2">
+        <div class="col-12">
+            @if (game != null && game.Players.Count > 0 && game.Players.Count < 4)
+            {
+                <button type="button" @onclick="PlayWithMachine" class="btn btn-primary">Play with machine(s)</button>
+            }
+        </div>
     </div>
 </div>
 
@@ -73,7 +84,7 @@
     }
 
 
-    public async Task Join()
+    private async Task Join()
     {
         if (game != null)
         {
@@ -85,6 +96,17 @@
             await InvokeAsync(StateHasChanged);
         }
     }
+
+    private async Task PlayWithMachine()
+    {
+        if (game != null)
+        {
+            game.RunWithMachine();
+            navigation.NavigateTo($"/games/{GameId}/players/{playerId}");
+        }
+        await Task.CompletedTask;
+    }
+
 
     public void Dispose()
     {

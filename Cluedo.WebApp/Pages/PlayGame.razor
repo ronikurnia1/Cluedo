@@ -248,18 +248,6 @@
     private void StateChangedHandler(object? sender, EventArgs e)
     {
         InvokeAsync(StateHasChanged);
-        if (player?.State == PlayingStates.Lose)
-        {
-            timer.Elapsed += ProceedTheGame;
-            timer.Start();
-        }
     }
 
-    private void ProceedTheGame(object? sender, ElapsedEventArgs e)
-    {
-        timer.Stop();
-        timer.Elapsed -= ProceedTheGame;
-
-        game?.Proceed();
-    }
 }

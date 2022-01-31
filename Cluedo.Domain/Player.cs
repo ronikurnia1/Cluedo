@@ -1,4 +1,7 @@
-﻿namespace Cluedo.Domain;
+﻿using System.Threading;
+using System.Timers;
+
+namespace Cluedo.Domain;
 
 public class Player
 {
@@ -34,15 +37,7 @@ public class Player
     public event EventHandler<GivenClueEventArgs>? GiveClueEvent;
     public event EventHandler<ConfirmedClueEventArgs>? ConfirmClueEvent;
     public event EventHandler<AccusedEventArgs>? AccuseEvent;
-
-    //public void MarkingCard(int cardNo, bool isNotSuspect)
-    //{
-    //    PlayingCard playingCard = suspectCards.First(c => c.No == cardNo);
-    //    if (playingCard != null)
-    //    {
-    //        playingCard.Eliminate(isNotSuspect);
-    //    }
-    //}
+    public event EventHandler<EventArgs>? MachineToResponseEvent;
 
     public void RequestToAction(PlayingStates state, string actionNote)
     {
@@ -51,12 +46,11 @@ public class Player
             if (state == PlayingStates.GivingClue)
             {
                 // Auto giving clue
-                var clueCard = Cards.FirstOrDefault(c => c.IsClueCard);
-
-                GivenClueEventArgs eventArgs = new(clueCard);
-                GiveClueEvent?.Invoke(this, eventArgs);
-                ClearCardInQuestionMarking();
+                var timer = new System.Timers.Timer(6000);
+                timer.Elapsed += AutoGiveClue;
+                timer.Start();
             }
+
             if (state == PlayingStates.Waiting)
             {
                 infoBuffer.AppendLine(actionNote);
@@ -70,7 +64,27 @@ public class Player
             {
                 clueRound = 0;
             }
+            if (MachineToResponseEvent != null)
+            {
+                // If machine as to response
+                MachineToResponseEvent?.Invoke(this, EventArgs.Empty);
+            }
         }
+    }
+
+    private void AutoGiveClue(object? sender, ElapsedEventArgs e)
+    {
+        if (sender is System.Timers.Timer timer)
+        {
+            timer.Stop();
+            timer.Elapsed -= AutoGiveClue;
+            timer.Dispose();
+        }
+        var clueCard = Cards.FirstOrDefault(c => c.IsClueCard);
+
+        GivenClueEventArgs eventArgs = new(clueCard);
+        GiveClueEvent?.Invoke(this, eventArgs);
+        ClearCardInQuestionMarking();
     }
 
     public void AskClue(IEnumerable<Card> cards)
@@ -128,6 +142,11 @@ public class Player
         infoBuffer.AppendLine(clueNote);
         ClueCard = card;
         State = PlayingStates.ConfirmingClue;
+        if (MachineToResponseEvent != null)
+        {
+            // If machine as to response
+            MachineToResponseEvent?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     public void ConfirmClue()
