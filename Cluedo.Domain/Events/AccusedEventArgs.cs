@@ -2,9 +2,9 @@
 
 public class AccusedEventArgs : EventArgs
 {
-    public AccusedEventArgs(IEnumerable<int> cardNumbers)
+    public AccusedEventArgs(IEnumerable<Card> cards)
     {
-        CardNumbers = cardNumbers.ToList().AsReadOnly();
+        Cards = cards.ToList().AsReadOnly();
     }
-    public ReadOnlyCollection<int> CardNumbers { get; private set; }
+    public ReadOnlyCollection<Card> Cards { get; private set; }
 }

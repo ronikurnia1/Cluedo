@@ -1,14 +1,14 @@
 ﻿
 <div class="@Size">
     <div class="game-card" @ondblclick="ToggleCard">
-        @if (Card.Location == CardLocations.DroppedZone)
+        @if (DropZone)
         {
             <span class="top-right oi oi-circle-x" aria-hidden="true" @onclick="Undropped"></span>
-            <img draggable="true" src="@Card.Image" alt="Avatar" style="width:100%" />
+            <img draggable="true" src="@Image" alt="Avatar" style="width:100%" />
         }
         else
         {
-            <img draggable="true" src="@Card.Image" alt="Avatar" class="@Card.State.EliminatedClass @Card.State.ClueCardClass"
+            <img draggable="true" src="@Image" alt="Avatar" class="@Card.EliminatedClass @Card.ClueCardClass"
              style="width:100%" @ondragstart="DragStart" />
         }
     </div>
@@ -16,13 +16,21 @@
 
 @code {
     [Parameter]
-    public CardModel Card { get; set; }
+    public PlayingCard Card { get; set; }
     [Parameter]
     public string Size { get; set; } = "col-2";
     [Parameter]
-    public EventCallback<CardModel> OnDragStart { get; set; }
+    public EventCallback<PlayingCard> OnDragStart { get; set; }
     [Parameter]
-    public EventCallback<CardModel> OnCardChange { get; set; }
+    public EventCallback<PlayingCard> OnCardChange { get; set; }
+    [Parameter]
+    public EventCallback<PlayingCard> OnUndropped { get; set; }
+
+    [Parameter]
+    public bool DropZone { get; set; } = false;
+
+
+    private string Image => $"img/{Card.No}.svg";
 
     protected override async Task OnInitializedAsync()
     {
@@ -36,13 +44,12 @@
 
     private async Task Undropped()
     {
-        Card.Undrop();
-        await OnCardChange.InvokeAsync(Card);
+        await OnUndropped.InvokeAsync(Card);
     }
 
     private async Task ToggleCard()
     {
-        Card.State.Eliminate(!Card.State.IsEliminated);
+        Card.Eliminate(!Card.IsEliminated);
         await OnCardChange.InvokeAsync(Card);
     }
 }

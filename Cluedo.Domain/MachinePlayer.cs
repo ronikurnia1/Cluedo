@@ -5,16 +5,17 @@ namespace Cluedo.Domain;
 public class MachinePlayer : IDisposable
 {
     private readonly Player player;
+    private readonly System.Timers.Timer timer;
 
     internal MachinePlayer(Player player)
     {
         this.player = player;
         this.player.MachineToResponseEvent += MachineRespose;
+        timer = new System.Timers.Timer(5000);
     }
 
     public void MachineRespose(object? sender, EventArgs e)
     {
-        var timer = new System.Timers.Timer(7000);
         timer.Elapsed += MachineAction;
         timer.Start();
     }
@@ -22,12 +23,9 @@ public class MachinePlayer : IDisposable
 
     private void MachineAction(object? sender, ElapsedEventArgs e)
     {
-        if (sender is System.Timers.Timer timer)
-        {
-            timer.Stop();
-            timer.Elapsed -= MachineAction;
-            timer.Dispose();
-        }
+        timer.Stop();
+        timer.Elapsed -= MachineAction;
+
         switch (player.State)
         {
             case PlayingStates.AskingForClue:
@@ -36,7 +34,7 @@ public class MachinePlayer : IDisposable
                 && c.PlayingType == PlayingTypes.Suspect).ToList();
                 if (cards.Count == 3)
                 {
-                    player.Accuse(cards.Select(c => c.No));
+                    player.Accuse(cards);
                 }
                 else
                 {

@@ -1,44 +1,51 @@
-﻿.remove-pading-top {
-    padding-top: 0;
+﻿.left-flex {
+    width: 45.6%;
+}
+
+.center-flex {
+    width: 27.2%;
+}
+
+.right-flex {
+    width: 27.2%;
+}
+
+.float-right {
+    float: right;
+}
+
+.scrolling-left {
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.scrolling-middle {
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: 100%;
+    background: #CCCCCC;
+    background: -webkit-linear-gradient(bottom, #CCCCCC, #B3B6B6);
+    background: -moz-linear-gradient(bottom, #CCCCCC, #B3B6B6);
+    background: linear-gradient(to top, #CCCCCC, #B3B6B6);
+    border-radius: 4px 4px;
+}
+
+.upper-row {
+    height: 23vw;
+}
+
+.lower-row {
+    height: calc(100% - 23vw);
 }
 
 .drop-zone {
     border-radius: 4px 4px;
     padding: 10px;
     /*border: 1px solid gray;*/
-    background: #2E828A;
-    background: -webkit-linear-gradient(bottom, #2E828A, #2C287B);
-    background: -moz-linear-gradient(bottom, #2E828A, #2C287B);
-    background: linear-gradient(to top, #2E828A, #2C287B);
-}
-
-.drop-zone-area {
-    padding-top: 10px;
-    min-height: 225px;
-}
-
-.sticky-top {
-    position: sticky;
-    z-index: 1;
-    justify-content: flex-end;
-    display: flex;
-    background-color: #0B6563;
-    padding-top: 20px;
-    padding-bottom: 20px;
-}
-
-.sticky-log {
-    border-radius: 4px 4px;
-    top: 320px;
-    position: sticky;
-    z-index: 1;
-    justify-content: flex-end;
-    display: flex;
-    background-color: #757575;
-}
-
-.log-scrollable {
-    overflow-x: hidden;
-    overflow-y: auto;
-    height: 400px;
+    background: #CCCCCC;
+    background: -webkit-linear-gradient(bottom, #CCCCCC, #B3B6B6);
+    background: -moz-linear-gradient(bottom, #CCCCCC, #B3B6B6);
+    background: linear-gradient(to top, #CCCCCC, #B3B6B6);
+    height: 12.5vw;
 }

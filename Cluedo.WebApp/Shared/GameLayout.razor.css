@@ -2,8 +2,12 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    background: #0B6563;
-    color: aliceblue;
+    height: 100%;
+    background: #487F7E;
+    background: -webkit-linear-gradient(bottom right, #487F7E, #95D4F4);
+    background: -moz-linear-gradient(bottom right, #487F7E, #95D4F4);
+    background: linear-gradient(to top left, #487F7E, #95D4F4);
+    color: #0a197b;
 }
 
 main {

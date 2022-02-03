@@ -10,6 +10,9 @@ public class Game : IDisposable
     private readonly string id;
     private readonly List<Card> distributedCards;
 
+    private readonly System.Timers.Timer timer;
+    private Player? accusingPlayer;
+    private List<Card> accusingCards = new();
 
     public Game(ILogger<Game> logger)
     {
@@ -20,6 +23,7 @@ public class Game : IDisposable
         CurrentQuestionCards = new List<Card>().AsReadOnly();
         secretEnvelope = GenerateSecretEnvelope(distributedCards);
         ClueMode = ClueModes.WaitForClue;
+        timer = new System.Timers.Timer(5000);
     }
 
     public string Id => id;
@@ -293,7 +297,7 @@ public class Game : IDisposable
 
     private void ConfirmClueEventHandler(object? sender, ConfirmedClueEventArgs e)
     {
-        if (e.NeedNextClue)
+        if (e.NeedNextClue && e.Round < 3)
         {
             GetRightPlayerToGiveClue(e.Round);
         }
@@ -338,42 +342,59 @@ public class Game : IDisposable
 
     private void AccuseEventHandler(object? sender, AccusedEventArgs e)
     {
-        Player? player = sender != null ? (Player)sender : null;
+        accusingPlayer = sender != null ? sender as Player : null;
+        accusingCards = e.Cards.ToList();
 
         logger.LogInformation("Player [{sequenceNo}]-[{playerName}] to accuse with card numbers: {cardNumbers}",
-            player?.SequenceNo, player?.Name, string.Join(", ", e.CardNumbers.OrderBy(i => i)));
+            accusingPlayer?.SequenceNo, accusingPlayer?.Name, string.Join(", ", e.Cards.OrderBy(i => i.No).Select(c => c.No)));
         logger.LogInformation("Secret envelope card numbers: {cardNumbers}",
             string.Join(", ", secretEnvelope.OrderBy(i => i.No).Select(c => c.No)));
 
-        if (e.CardNumbers.OrderBy(i => i).SequenceEqual(secretEnvelope.Select(c => c.No).OrderBy(i => i)))
+        CurrentQuestionCards = e.Cards;
+
+        List<Player> except = new();
+        if (accusingPlayer != null) except.Add(accusingPlayer);
+        BroadcastMessage(except, $"{accusingPlayer?.Name} try to accuse with: {string.Join(", ", e.Cards.Select(c => c.Name))}");
+
+        StateChangedEvent?.Invoke(this, EventArgs.Empty);
+
+        timer.Elapsed += DecideWinner;
+        timer.Start();
+    }
+
+    private void DecideWinner(object? sender, ElapsedEventArgs e)
+    {
+        timer.Stop();
+        timer.Elapsed -= DecideWinner;
+
+        if (accusingCards.OrderBy(i => i.No).Select(c => c.No)
+            .SequenceEqual(secretEnvelope.Select(c => c.No).OrderBy(i => i)))
         {
-            Winner = player;
+            Winner = accusingPlayer;
             Winner?.RequestToAction(PlayingStates.Win, "Congratulation you win the game!");
             logger.LogInformation("Player [{sequenceNo}]-[{playerName}] WIN the game",
-                player?.SequenceNo, player?.Name);
+                Winner?.SequenceNo, Winner?.Name);
 
-            Parallel.ForEach(players.Where(p => p.Id != player?.Id).ToList(),
+            Parallel.ForEach(players.Where(p => p.Id != Winner?.Id).ToList(),
                 i => i.RequestToAction(PlayingStates.Lose,
-                $"Good work! but player {player?.Name} has win the game!"));
-
-            StateChangedEvent?.Invoke(this, EventArgs.Empty);
+                $"Sorry! but {Winner?.Name} has win the game!"));
 
             logger.LogInformation("Game has ended");
+            StateChangedEvent?.Invoke(this, EventArgs.Empty);
         }
         else
         {
             logger.LogInformation("Player [{sequenceNo}]-[{playerName}] LOSE the game",
-                player?.SequenceNo, player?.Name);
+                accusingPlayer?.SequenceNo, accusingPlayer?.Name);
 
-            player?.RequestToAction(PlayingStates.Lose,
+            accusingPlayer?.RequestToAction(PlayingStates.Lose,
                 $"Sorry you lose, but the correct answer are: {string.Join(", ", secretEnvelope.Select(p => p.Name))}");
 
-            Parallel.ForEach(players.Where(p => p.Id != player?.Id).ToList(),
-                i => i.GiveGameInfo($"player {player?.Name} LOSES the game!"));
+            Parallel.ForEach(players.Where(p => p.Id != accusingPlayer?.Id).ToList(),
+                i => i.GiveGameInfo($"player {accusingPlayer?.Name} LOSES the game!"));
 
             StateChangedEvent?.Invoke(this, EventArgs.Empty);
 
-            var timer = new System.Timers.Timer(6000);
             timer.Elapsed += ProceedTheGame;
             timer.Start();
         }
@@ -382,12 +403,9 @@ public class Game : IDisposable
 
     private void ProceedTheGame(object? sender, ElapsedEventArgs e)
     {
-        if (sender is System.Timers.Timer timer)
-        {
-            timer.Stop();
-            timer.Elapsed -= ProceedTheGame;
-            timer.Dispose();
-        }
+        timer.Stop();
+        timer.Elapsed -= ProceedTheGame;
+
         NextPlayerTurnToAsk();
         StateChangedEvent?.Invoke(this, EventArgs.Empty);
     }

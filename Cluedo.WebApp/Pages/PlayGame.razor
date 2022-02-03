@@ -1,132 +1,160 @@
 ﻿@page "/games/{gameId}/players/{playerId}"
-@using System.Timers
 @inject IGameService GameService
 @implements IDisposable
 @inject IToaster Toaster
 @layout GameLayout
 @inject NavigationManager NavigationManager
 
-<article class="content ps-5 pe-5 remove-pading-top">
-    <div class="row sticky-top">
-        <div class="col-4 drop-zone">
-            <h5>Card Dropzone</h5>
-            <div class="row g-2 drop-zone-area" ondragover="event.preventDefault();" @ondrop="DroppedCard">
-                @foreach (CardModel card in PlayingCards.Where(c => c.Location == CardLocations.DroppedZone))
+<div class="d-flex flex-row h-100 pe-1">
+    <div class="scrolling-left ps-3 pe-3 pt-3 pb-3 left-flex">
+        <div class="row g-0 pb-4">
+            <h5>Your cards</h5>
+            <div class="col-12 container-fluid">
+                <div class="row g-2 flex-row-reverse">
+                    @foreach (PlayingCard card in PlayingCards.Where(c => c.PlayingType == PlayingTypes.OnHand))
+                    {
+                        <CardView Card="@card" Size="col" OnCardChange="@CardChange" OnDragStart="@DraggingCard" />
+                    }
+                    <div class="col"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-0 pb-2">
+            <h5>Suspect cards</h5>
+            <div class="col-12 container-fluid">
+                <div class="row g-2 flex-row-reverse">
+                    @foreach (PlayingCard card in PlayingCards
+                    .Where(c => c.PlayingType == PlayingTypes.Suspect)
+                    .OrderBy(c => c.CardType).Skip(0).Take(5))
+                    {
+                        <CardView Card="@card" Size="col" OnCardChange="@CardChange"
+                              OnDragStart="@DraggingCard" />
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-0 pb-2">
+            <div class="col-12 container-fluid">
+                <div class="row g-2 flex-row-reverse">
+                    @foreach (PlayingCard card in PlayingCards
+                    .Where(c => c.PlayingType == PlayingTypes.Suspect)
+                    .OrderBy(c => c.CardType).Skip(5).Take(5))
+                    {
+                        <CardView Card="@card" Size="col" OnCardChange="@CardChange"
+                              OnDragStart="@DraggingCard" />
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-0 pb-2">
+            <div class="col-12 container-fluid">
+                <div class="row g-2 flex-row-reverse">
+                    @foreach (PlayingCard card in PlayingCards
+                    .Where(c => c.PlayingType == PlayingTypes.Suspect)
+                    .OrderBy(c => c.CardType).Skip(10).Take(5))
+                    {
+                        <CardView Card="@card" Size="col" OnCardChange="@CardChange"
+                              OnDragStart="@DraggingCard" />
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="center-flex ps-2 pe-2 pt-3">
+        <div class="col-12 container-fluid upper-row ps-2 pe-2">
+            <h5>Dropped zone</h5>
+            <div class="row pb-3 g-2 drop-zone" ondragover="event.preventDefault();" @ondrop="DroppedCard">
+                @foreach (PlayingCard card in DroppedCards)
                 {
-                    <CardView Card="@card" Size="col-4" OnCardChange="@CardChange" />
+                    <CardView Card="@card" OnUndropped="@OnUndropped" DropZone=true Size="col-4" OnCardChange="@CardChange" />
                 }
             </div>
-        </div>
-        <div class="col-4 action-button">
-            <div class="d-grid gap-2">
-                <button type="button" class="btn btn-light" disabled="@(!CanAskForClue)" @onclick="AskForClue">
-                    Ask for clue
-                </button>
-                <button type="button" class="btn btn-light" disabled="@(!CanGiveClue)" @onclick="GiveClue">
-                    Give a clue
-                </button>
-                <button type="button" class="btn btn-light" disabled="@(!CanHaveNoClue)" @onclick="HaveNoClue">
-                    Have no clue
-                </button>
-                <button type="button" class="btn btn-light" disabled="@(!CanConfirmClue)" @onclick="ConfirmClue">
-                    Confirm a clue
-                </button>
-                <button type="button" class="btn btn-danger" disabled="@(!CanAccuse)" @onclick="Accuse">
-                    Accuse
-                </button>
-                <button type="button" class="btn btn-warning" @onclick="GoToHome">
-                    Home
-                </button>
+            <div class="row pt-1">
+                <div class="col p-2">
+                    <div class="d-grid gap-1">
+                        <button type="button" class="btn btn-light btn-sm" disabled="@(!CanAskForClue)" @onclick="AskForClue">
+                            Ask for clue
+                        </button>
+                        <button type="button" class="btn btn-light btn-sm" disabled="@(!CanHaveNoClue)" @onclick="HaveNoClue">
+                            Have no clue
+                        </button>
+                        <button type="button" class="btn btn-warning btn-sm" @onclick="GoToHome">
+                            Home
+                        </button>
+                    </div>
+                </div>
+                <div class="col p-2">
+                    <div class="d-grid gap-1">
+                        <button type="button" class="btn btn-light btn-sm" disabled="@(!CanGiveClue)" @onclick="GiveClue">
+                            Give a clue
+                        </button>
+                        <button type="button" class="btn btn-light btn-sm" disabled="@(!CanConfirmClue)" @onclick="ConfirmClue">
+                            Confirm a clue
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" disabled="@(!CanAccuse)" @onclick="Accuse">
+                            Accuse
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-4 drop-zone">
+        <div class="row g-2 d-flex ps-2 pe-2 pb-3 lower-row">
+            <div class="scrolling-middle flex-fill">
+                <ul>
+                    @if (player != null && player.GameInfo != null)
+                    {
+                        int index = 0;
+                        foreach (string item in player.GameInfo.Reverse())
+                        {
+                            if (index == 0)
+                            {
+                                <li style="color: darkblue"><b>@item</b></li>
+                            }
+                            else
+                            {
+                                <li>@item</li>
+                            }
+                            index += 1;
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="right-flex ps-2 pe-2 pt-3">
+        <div class="col-12 container-fluid ps-2 pe-2">
             <h5>Cards in question</h5>
-            <div class="row g-2 drop-zone-area">
+            <div class="row pb-3 g-2 drop-zone">
                 @if (game != null)
                 {
-                    @foreach (Card card in game.CurrentQuestionCards)
+                    foreach (Card card in game.CurrentQuestionCards.ToList())
                     {
-                        CardModel cardModel = new CardModel(new PlayingCard(card, PlayingTypes.Suspect));
-                        <CardView Card="@cardModel" Size="col-4" OnCardChange="@CardChange" />
+                        <CardView Size="col-4" Card="new PlayingCard(card, PlayingTypes.OnHand)" />
+                    }
+                }
+            </div>
+            <div class="row">
+                <div class="p-5"></div>
+            </div>
+
+            <h5>Cards to reveal</h5>
+            <div class="row pb-3 g-2 drop-zone">
+                @if (game != null && (player?.State == PlayingStates.Lose
+                || player?.State == PlayingStates.Win))
+                {
+                    foreach (Card card in game.SecretEnvelope.ToList())
+                    {
+                        <CardView Size="col" Card="new PlayingCard(card, PlayingTypes.OnHand)" />
                     }
                 }
             </div>
         </div>
     </div>
+</div>
 
-    <div class="row pb-3 g-4">
-        <div class="col-8">
-            <div class="row g-0 pb-3">
-                <div><h5>Your cards</h5></div>
-                <div class="col-12">
-                    <div class="row g-2">
-                        @foreach (CardModel card in PlayingCards.Where(c => c.Location == CardLocations.OnHandZone))
-                        {
-                            <CardView Card="@card" Size="col-2" OnCardChange="@CardChange" OnDragStart="@DraggingCard" />
-                        }
-                    </div>
-                </div>
-            </div>
-            <div class="row g-0 pb-3">
-                <div><h5>Suspect: Actor</h5></div>
-                <div class="col-12">
-                    <div class="row g-2">
-                        @foreach (CardModel card in PlayingCards.Where(c => c.Location == CardLocations.ActorZone))
-                        {
-                            <CardView Card="@card" Size="col-2" OnCardChange="@CardChange" OnDragStart="@DraggingCard" />
-                        }
-                    </div>
-                </div>
-            </div>
-            <div class="row g-0 pb-3">
-                <div><h5>Suspect: Weapon</h5></div>
-                <div class="col-12">
-                    <div class="row g-2">
-                        @foreach (CardModel card in PlayingCards.Where(c => c.Location == CardLocations.WeaponZone))
-                        {
-                            <CardView Card="@card" Size="col-2" OnCardChange="@CardChange" OnDragStart="@DraggingCard" />
-                        }
-                    </div>
-                </div>
-            </div>
-            <div class="row g-0 pb-3">
-                <div><h5>Suspect: Place</h5></div>
-                <div class="col-12">
-                    <div class="row g-2">
-                        @foreach (CardModel card in PlayingCards.Where(c => c.Location == CardLocations.PlaceZone))
-                        {
-                            <CardView Card="@card" Size="col-2" OnCardChange="@CardChange" OnDragStart="@DraggingCard" />
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-4">
-            <div class="row sticky-log">
-                <div class="col-12 log-scrollable">
-                    <ul>
-                        @if (player != null && player.GameInfo != null)
-                        {
-                            int index = 0;
-                            foreach (string item in player.GameInfo.Reverse())
-                            {
-                                if (index == 0)
-                                {
-                                    <li style="color: orange"><b>@item</b></li>
-                                }
-                                else
-                                {
-                                    <li>@item</li>
-                                }
-                                index += 1;
-                            }
-                        }
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-</article>
 
 @code {
 
@@ -139,59 +167,67 @@
     private Game? game;
     private System.Timers.Timer timer = new(7000);
 
-    private CardModel? draggedCard { get; set; } = null;
-    private List<CardModel> PlayingCards { get; set; } = new();
+    private PlayingCard? draggedCard { get; set; } = null;
+    private List<PlayingCard> PlayingCards { get; set; } = new();
+    private List<PlayingCard> DroppedCards { get; set; } = new();
 
     private bool CanAskForClue =>
-    PlayingCards.Count(c => c.Location == CardLocations.DroppedZone) == 3
+    DroppedCards.Count() == 3
     && player?.State == PlayingStates.AskingForClue;
 
     private bool CanGiveClue => player?.State == PlayingStates.GivingClue
-    && PlayingCards.Count(c => c.Location == CardLocations.DroppedZone) == 1;
+    && DroppedCards.Count() == 1;
 
     private bool CanHaveNoClue => player?.State == PlayingStates.GivingClue
-    && PlayingCards.Count(c => c.State.IsClueCard) == 0;
+    && PlayingCards.Count(c => c.IsClueCard) == 0;
 
     private bool CanConfirmClue => player?.State == PlayingStates.ConfirmingClue;
 
     private bool CanAccuse => player?.State == PlayingStates.AskingForClue
-    && PlayingCards.Count(c => c.Location == CardLocations.DroppedZone) == 3;
+    && DroppedCards.Count() == 3;
 
-    private void DraggingCard(CardModel card)
+    private void DraggingCard(PlayingCard card)
     {
         draggedCard = card;
     }
 
     private async Task CardChange()
     {
-        //await InvokeAsync(StateHasChanged);
-        await Task.CompletedTask;
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task DroppedCard()
     {
         if (draggedCard != null
-            && PlayingCards.Count(c => c.Location == CardLocations.DroppedZone) < 3)
+            && DroppedCards.Count() < 3)
         {
-            draggedCard.Drop();
+            PlayingCard model = new PlayingCard(draggedCard);
+            DroppedCards.Add(model);
+
+            draggedCard = null;
             await InvokeAsync(StateHasChanged);
         }
     }
 
+    private async Task OnUndropped(PlayingCard card)
+    {
+        DroppedCards.Remove(card);
+        await Task.CompletedTask;
+    }
+
     private async Task AskForClue()
     {
-        player?.AskClue(PlayingCards.Where(c => c.Location == CardLocations.DroppedZone)
-        .Select(i => i.State));
-        PlayingCards.Where(c => c.Location == CardLocations.DroppedZone).ToList()
-        .ForEach(i => i.Undrop());
+        player?.AskClue(DroppedCards);
+        DroppedCards.Clear();
         await Task.CompletedTask;
     }
 
     private async Task GiveClue()
     {
-        var clueCard = PlayingCards.First(c => c.Location == CardLocations.DroppedZone);
-        player?.GiveClue(clueCard.State);
-        clueCard.Undrop();
+        var clueCard = DroppedCards.First();
+        player?.GiveClue(clueCard);
+
+        DroppedCards.Clear();
 
         await Task.CompletedTask;
     }
@@ -210,9 +246,8 @@
 
     private async Task Accuse()
     {
-        var accuseCards = PlayingCards.Where(c => c.Location == CardLocations.DroppedZone).ToList();
-        player?.Accuse(accuseCards.Select(c => c.State.No));
-        accuseCards.ForEach(i => i.Undrop());
+        player?.Accuse(DroppedCards);
+        DroppedCards.Clear();
         await Task.CompletedTask;
     }
 
@@ -232,7 +267,7 @@
         {
             player = game.Players.First(p => p.Id == PlayerId);
 
-            PlayingCards = player.Cards.Select(c => new CardModel(c)).ToList();
+            PlayingCards = player.Cards.ToList();
             game.StateChangedEvent += StateChangedHandler;
         }
     }

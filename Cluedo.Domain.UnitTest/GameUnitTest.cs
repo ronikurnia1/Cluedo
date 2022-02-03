@@ -70,7 +70,7 @@ public class GameUnitTest : IAsyncLifetime
         await Task.WhenAll(tasks);
 
         // act
-        game.CurrentAskingClue?.Accuse(game.SecretEnvelope.Select(c => c.No));
+        game.CurrentAskingClue?.Accuse(game.SecretEnvelope);
 
         // assert
         Assert.True(game.CurrentAskingClue?.State == PlayingStates.Win);
@@ -90,11 +90,12 @@ public class GameUnitTest : IAsyncLifetime
 
         // act
         game.CurrentAskingClue?.Accuse(game.CurrentAskingClue
-            .Cards.Take(3).Select(c => c.No));
+            .Cards.Take(3));
 
         // assert
         Assert.True(game.CurrentAskingClue?.State == PlayingStates.Lose);
     }
+
 
     [Fact]
     public async Task GivingClue_WithRightCard()

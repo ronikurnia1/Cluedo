@@ -1,5 +1,4 @@
-﻿using System.Threading;
-using System.Timers;
+﻿using System.Timers;
 
 namespace Cluedo.Domain;
 
@@ -7,7 +6,8 @@ public class Player
 {
     private int clueRound;
     private readonly IEnumerable<PlayingCard> cards;
-    private StringBuilder infoBuffer;
+    private readonly StringBuilder infoBuffer;
+    private readonly System.Timers.Timer timer;
 
     internal protected Player(string name, int seqNo,
         IEnumerable<PlayingCard> cards)
@@ -20,6 +20,7 @@ public class Player
         clueRound = 0;
         ClueCard = null;
         infoBuffer = new StringBuilder();
+        timer = new System.Timers.Timer(5000);
     }
 
     public ReadOnlyCollection<PlayingCard> Cards
@@ -41,47 +42,37 @@ public class Player
 
     public void RequestToAction(PlayingStates state, string actionNote)
     {
+        infoBuffer.AppendLine(actionNote);
         if (State == PlayingStates.Lose)
         {
             if (state == PlayingStates.GivingClue)
             {
                 // Auto giving clue
-                var timer = new System.Timers.Timer(6000);
                 timer.Elapsed += AutoGiveClue;
                 timer.Start();
-            }
-
-            if (state == PlayingStates.Waiting)
-            {
-                infoBuffer.AppendLine(actionNote);
             }
         }
         else
         {
             State = state;
-            infoBuffer.AppendLine(actionNote);
             if (state == PlayingStates.AskingForClue)
             {
                 clueRound = 0;
             }
             if (MachineToResponseEvent != null)
             {
-                // If machine as to response
-                MachineToResponseEvent?.Invoke(this, EventArgs.Empty);
+                // If machine, ask it to response
+                MachineToResponseEvent.Invoke(this, EventArgs.Empty);
             }
         }
     }
 
     private void AutoGiveClue(object? sender, ElapsedEventArgs e)
     {
-        if (sender is System.Timers.Timer timer)
-        {
-            timer.Stop();
-            timer.Elapsed -= AutoGiveClue;
-            timer.Dispose();
-        }
-        var clueCard = Cards.FirstOrDefault(c => c.IsClueCard);
+        timer.Stop();
+        timer.Elapsed -= AutoGiveClue;
 
+        var clueCard = Cards.FirstOrDefault(c => c.IsClueCard);
         GivenClueEventArgs eventArgs = new(clueCard);
         GiveClueEvent?.Invoke(this, eventArgs);
         ClearCardInQuestionMarking();
@@ -142,6 +133,7 @@ public class Player
         infoBuffer.AppendLine(clueNote);
         ClueCard = card;
         State = PlayingStates.ConfirmingClue;
+
         if (MachineToResponseEvent != null)
         {
             // If machine as to response
@@ -164,11 +156,11 @@ public class Player
         }
     }
 
-    public void Accuse(IEnumerable<int> cardsNo)
+    public void Accuse(IEnumerable<Card> cards)
     {
         if (State == PlayingStates.AskingForClue)
         {
-            AccusedEventArgs eventArgs = new(cardsNo);
+            AccusedEventArgs eventArgs = new(cards);
             State = PlayingStates.Waiting;
             AccuseEvent?.Invoke(this, eventArgs);
         }
