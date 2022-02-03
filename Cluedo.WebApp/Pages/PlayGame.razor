@@ -142,7 +142,7 @@
 
             <h5>Your accuse</h5>
             <div class="row pb-3 g-2 drop-zone">
-                @foreach (PlayingCard card in AccuseCards.OrderBy(c=> c.No))
+                @foreach (PlayingCard card in AccuseCards.OrderBy(c => c.No))
                 {
                     <CardView Size="col" Card="card" PlayableCard=false />
                 }
@@ -154,7 +154,7 @@
                     if (player?.State == PlayingStates.Lose
                     || player?.State == PlayingStates.Win)
                     {
-                        foreach (Card card in game.SecretEnvelope.OrderBy(c=> c.No).ToList())
+                        foreach (Card card in game.SecretEnvelope.OrderBy(c => c.No).ToList())
                         {
                             <CardView Size="col" PlayableCard=false Card="new PlayingCard(card, PlayingTypes.OnHand)" />
                         }
@@ -271,6 +271,11 @@
 
     private async Task GoToHome()
     {
+        if (player?.State == PlayingStates.Win && game != null)
+        {
+            // Terminate the game
+            GameService.DemolishGame(game.Id);
+        }
         NavigationManager.NavigateTo("/");
         await Task.CompletedTask;
     }

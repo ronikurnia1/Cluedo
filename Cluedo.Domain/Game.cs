@@ -336,12 +336,12 @@ public class Game : IDisposable
         logger.LogInformation("Player [{sequenceNo}]-[{playerName}] to ask for clue",
             CurrentAskingClue?.SequenceNo, CurrentAskingClue?.Name);
 
-        CurrentAskingClue?.RequestToAction(PlayingStates.AskingForClue, "Your turn to ask a clue or accuse");
-
         List<Player> except = new();
         string info = $"Please wait, {CurrentAskingClue?.Name} turn to ask a clue";
         if (CurrentAskingClue != null) except.Add(CurrentAskingClue);
         BroadcastMessage(except, info);
+
+        CurrentAskingClue?.RequestToAction(PlayingStates.AskingForClue, "Your turn to ask a clue or accuse");
     }
 
     private void AccuseEventHandler(object? sender, AccusedEventArgs e)
