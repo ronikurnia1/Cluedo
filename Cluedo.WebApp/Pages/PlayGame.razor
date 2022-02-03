@@ -69,7 +69,7 @@
             <div class="row pb-3 g-2 drop-zone" ondragover="event.preventDefault();" @ondrop="DroppedCard">
                 @foreach (PlayingCard card in DroppedCards)
                 {
-                    <CardView Card="@card" OnUndropped="@OnUndropped" DropZone=true Size="col-4" OnCardChange="@CardChange" />
+                    <CardView Card="card" OnUndropped="@OnUndropped" DropZone=true Size="col-4" OnCardChange="@CardChange" />
                 }
             </div>
             <div class="row pt-1">
@@ -130,24 +130,41 @@
             <div class="row pb-3 g-2 drop-zone">
                 @if (game != null)
                 {
-                    foreach (Card card in game.CurrentQuestionCards.ToList())
+                    foreach (PlayingCard card in game.CurrentQuestionCards.ToList())
                     {
-                        <CardView Size="col-4" Card="new PlayingCard(card, PlayingTypes.OnHand)" />
+                        <CardView Size="col-4" Card="card" PlayableCard=false />
                     }
                 }
             </div>
             <div class="row">
-                <div class="p-5"></div>
+                <div class="p-4"></div>
             </div>
 
+            <h5>Your accuse</h5>
+            <div class="row pb-3 g-2 drop-zone">
+                @foreach (PlayingCard card in AccuseCards.OrderBy(c=> c.No))
+                {
+                    <CardView Size="col" Card="card" PlayableCard=false />
+                }
+            </div>
             <h5>Cards to reveal</h5>
             <div class="row pb-3 g-2 drop-zone">
-                @if (game != null && (player?.State == PlayingStates.Lose
-                || player?.State == PlayingStates.Win))
+                @if (game != null)
                 {
-                    foreach (Card card in game.SecretEnvelope.ToList())
+                    if (player?.State == PlayingStates.Lose
+                    || player?.State == PlayingStates.Win)
                     {
-                        <CardView Size="col" Card="new PlayingCard(card, PlayingTypes.OnHand)" />
+                        foreach (Card card in game.SecretEnvelope.OrderBy(c=> c.No).ToList())
+                        {
+                            <CardView Size="col" PlayableCard=false Card="new PlayingCard(card, PlayingTypes.OnHand)" />
+                        }
+                    }
+                    else
+                    {
+                        foreach (Card card in game.SuspectCovers.ToList())
+                        {
+                            <CardView Size="col" PlayableCard=false Card="new PlayingCard(card, PlayingTypes.OnHand)" />
+                        }
                     }
                 }
             </div>
@@ -170,6 +187,8 @@
     private PlayingCard? draggedCard { get; set; } = null;
     private List<PlayingCard> PlayingCards { get; set; } = new();
     private List<PlayingCard> DroppedCards { get; set; } = new();
+
+    private List<PlayingCard> AccuseCards { get; set; } = new();
 
     private bool CanAskForClue =>
     DroppedCards.Count() == 3
@@ -201,9 +220,7 @@
         if (draggedCard != null
             && DroppedCards.Count() < 3)
         {
-            PlayingCard model = new PlayingCard(draggedCard);
-            DroppedCards.Add(model);
-
+            DroppedCards.Add(new PlayingCard(draggedCard, PlayingTypes.OnHand));
             draggedCard = null;
             await InvokeAsync(StateHasChanged);
         }
@@ -247,6 +264,7 @@
     private async Task Accuse()
     {
         player?.Accuse(DroppedCards);
+        AccuseCards.AddRange(DroppedCards);
         DroppedCards.Clear();
         await Task.CompletedTask;
     }

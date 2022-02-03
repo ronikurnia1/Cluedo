@@ -23,7 +23,7 @@ public class Game : IDisposable
         CurrentQuestionCards = new List<Card>().AsReadOnly();
         secretEnvelope = GenerateSecretEnvelope(distributedCards);
         ClueMode = ClueModes.WaitForClue;
-        timer = new System.Timers.Timer(5000);
+        timer = new System.Timers.Timer(4000);
     }
 
     public string Id => id;
@@ -42,6 +42,12 @@ public class Game : IDisposable
         return player.Id;
     }
     public ReadOnlyCollection<Card> SecretEnvelope => secretEnvelope.AsReadOnly();
+    public ReadOnlyCollection<Card> SuspectCovers => new List<Card>(){
+        new Card(19, "Suspect", CardTypes.Actor),
+        new Card(19, "Suspect", CardTypes.Weapon),
+        new Card(19, "Suspect", CardTypes.Place),
+    }.AsReadOnly();
+
     public ReadOnlyCollection<Card> CurrentQuestionCards { get; private set; }
     public Player? CurrentAskingClue { get; private set; }
     public Player? CurrentGivingClue { get; private set; }
@@ -61,8 +67,6 @@ public class Game : IDisposable
             machines.Add(new(players.First(p => p.Id == playerId)));
         }
     }
-
-
 
     private readonly List<Player> players = new();
     private readonly List<MachinePlayer> machines = new();
@@ -400,7 +404,6 @@ public class Game : IDisposable
         }
     }
 
-
     private void ProceedTheGame(object? sender, ElapsedEventArgs e)
     {
         timer.Stop();
@@ -409,7 +412,6 @@ public class Game : IDisposable
         NextPlayerTurnToAsk();
         StateChangedEvent?.Invoke(this, EventArgs.Empty);
     }
-
 
     private void BroadcastMessage(IEnumerable<Player> except, string info)
     {

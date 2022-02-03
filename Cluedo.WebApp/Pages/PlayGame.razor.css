@@ -24,10 +24,10 @@
     overflow-x: hidden;
     overflow-y: auto;
     height: 100%;
-    background: #CCCCCC;
-    background: -webkit-linear-gradient(bottom, #CCCCCC, #B3B6B6);
-    background: -moz-linear-gradient(bottom, #CCCCCC, #B3B6B6);
-    background: linear-gradient(to top, #CCCCCC, #B3B6B6);
+    background: #DAF1E6;
+    background: -webkit-linear-gradient(bottom, #DAF1E6, #CEE9EB);
+    background: -moz-linear-gradient(bottom, #DAF1E6, #CEE9EB);
+    background: linear-gradient(to top, #DAF1E6, #CEE9EB);
     border-radius: 4px 4px;
 }
 
@@ -43,9 +43,9 @@
     border-radius: 4px 4px;
     padding: 10px;
     /*border: 1px solid gray;*/
-    background: #CCCCCC;
-    background: -webkit-linear-gradient(bottom, #CCCCCC, #B3B6B6);
-    background: -moz-linear-gradient(bottom, #CCCCCC, #B3B6B6);
-    background: linear-gradient(to top, #CCCCCC, #B3B6B6);
+    background: #DAF1E6;
+    background: -webkit-linear-gradient(bottom, #DAF1E6, #CEE9EB);
+    background: -moz-linear-gradient(bottom, #DAF1E6, #CEE9EB);
+    background: linear-gradient(to top, #DAF1E6, #CEE9EB);
     height: 12.5vw;
 }

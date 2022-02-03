@@ -1,15 +1,21 @@
 ﻿
 <div class="@Size">
-    <div class="game-card" @ondblclick="ToggleCard">
+    <div class="game-card">
         @if (DropZone)
         {
-            <span class="top-right oi oi-circle-x" aria-hidden="true" @onclick="Undropped"></span>
-            <img draggable="true" src="@Image" alt="Avatar" style="width:100%" />
+            <span class="top-right oi oi-circle-x"
+              aria-hidden="true" @onclick="Undropped"></span>
+        }
+
+        @if (PlayableCard)
+        {
+            <img draggable="true" src="@Image" alt="Avatar" @ondblclick="ToggleCard"
+             class="@Card.EliminatedClass @Card.ClueCardClass"
+             style="width:100%" @ondragstart="DragStart" />
         }
         else
         {
-            <img draggable="true" src="@Image" alt="Avatar" class="@Card.EliminatedClass @Card.ClueCardClass"
-             style="width:100%" @ondragstart="DragStart" />
+            <img draggable="true" src="@Image" alt="Avatar" style="width:100%" />
         }
     </div>
 </div>
@@ -28,7 +34,8 @@
 
     [Parameter]
     public bool DropZone { get; set; } = false;
-
+    [Parameter]
+    public bool PlayableCard { get; set; } = true;
 
     private string Image => $"img/{Card.No}.svg";
 
