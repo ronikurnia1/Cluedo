@@ -1,6 +1,6 @@
 ﻿
 <div class="@Size">
-    <div class="game-card">
+    <div class="game-card" draggable="true" @ondragstart="DragStart">
         @if (DropZone)
         {
             <span class="top-right oi oi-circle-x"
@@ -9,20 +9,20 @@
 
         @if (PlayableCard)
         {
-            <img draggable="true" src="@Image" alt="Avatar" @ondblclick="ToggleCard"
-             class="@Card.EliminatedClass @Card.ClueCardClass"
-             style="width:100%" @ondragstart="DragStart" />
+            <img src="@Image" alt="Avatar" @ondblclick="ToggleCard"
+             class="@Card?.EliminatedClass @Card?.ClueCardClass"
+             style="width:100%" />
         }
         else
         {
-            <img draggable="true" src="@Image" alt="Avatar" style="width:100%" />
+            <img src="@Image" alt="Avatar" style="width:100%" />
         }
     </div>
 </div>
 
 @code {
     [Parameter]
-    public PlayingCard Card { get; set; }
+    public PlayingCard? Card { get; set; }
     [Parameter]
     public string Size { get; set; } = "col-2";
     [Parameter]
@@ -37,7 +37,7 @@
     [Parameter]
     public bool PlayableCard { get; set; } = true;
 
-    private string Image => $"img/{Card.No}.svg";
+    private string Image => $"img/{Card?.No}.svg";
 
     protected override async Task OnInitializedAsync()
     {
@@ -56,7 +56,7 @@
 
     private async Task ToggleCard()
     {
-        Card.Eliminate(!Card.IsEliminated);
+        Card?.Eliminate(!Card.IsEliminated);
         await OnCardChange.InvokeAsync(Card);
     }
 }

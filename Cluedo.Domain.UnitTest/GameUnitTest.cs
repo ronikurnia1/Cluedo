@@ -72,6 +72,7 @@ public class GameUnitTest : IAsyncLifetime
         // act
         game.CurrentAskingClue?.Accuse(game.SecretEnvelope);
 
+        System.Threading.Thread.Sleep(5000);
         // assert
         Assert.True(game.CurrentAskingClue?.State == PlayingStates.Win);
     }
@@ -91,6 +92,7 @@ public class GameUnitTest : IAsyncLifetime
         // act
         game.CurrentAskingClue?.Accuse(game.CurrentAskingClue
             .Cards.Take(3));
+        System.Threading.Thread.Sleep(5000);
 
         // assert
         Assert.True(game.CurrentAskingClue?.State == PlayingStates.Lose);
