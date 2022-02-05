@@ -1,5 +1,7 @@
 ﻿@page "/games"
 @inject IGameService GameService
+@inject IToastService toastService
+@inject NavigationManager navigation
 
 <div class="content">
     <div class="row">
@@ -24,8 +26,15 @@
 @code {
     protected async Task CreateNewGame()
     {
-        var game = GameService.CreateNewGame();
-        await InvokeAsync(StateHasChanged);
-        await Task.CompletedTask;
+        try
+        {
+            var game = GameService.CreateNewGame();
+            navigation.NavigateTo($"/games/{game.Id}");
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowWarning(ex.Message);
+        }
     }
 }

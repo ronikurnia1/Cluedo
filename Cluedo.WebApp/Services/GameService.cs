@@ -16,9 +16,16 @@ public class GameService : IGameService
 
     public Game CreateNewGame()
     {
-        var newGame = new Game(loggerFactory.CreateLogger<Game>());
-        games.Add(newGame);
-        return newGame;
+        if (games.Count < 5)
+        {
+            var newGame = new Game(loggerFactory.CreateLogger<Game>());
+            games.Add(newGame);
+            return newGame;
+        }
+        else
+        {
+            throw new InvalidOperationException("Maximum 5 games has been reached");
+        }
     }
 
     public void DemolishGame(string gameId)
