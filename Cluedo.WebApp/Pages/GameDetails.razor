@@ -32,7 +32,8 @@
                     }
                 }
             </ul>
-            @if (game != null && game.Players.Count < 4 && game.Players.Count(p => p.Id == playerId) == 0)
+            @if (game != null && game.Players.Count < 4
+            && game.Players.Count(p => p.Id == playerId) == 0)
             {
                 <div class="content">
                     <EditForm Model="model" OnValidSubmit="Join" class="form">
@@ -50,8 +51,10 @@
         </div>
     </div>
     <div class="row g-2">
-        <div class="col-12 p-3">
-            @if (game != null && game.Players.Count > 0 && game.Players.Count < 4)
+        <div class="col-12 pt-3">
+            @if (game != null && game.Players.Count > 0
+            && game.Players.Count < 4
+            && game.Players.Count(p => p.Id == playerId) == 1)
             {
                 <button type="button" @onclick="PlayWithMachine" class="btn btn-primary">Play with machine(s)</button>
             }
