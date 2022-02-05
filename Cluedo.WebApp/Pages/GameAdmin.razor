@@ -1,23 +1,37 @@
 ﻿@page "/admin"
 @inject IGameService GameService
 
-<div class="row">
-    <div class="col-12">
-        <h3>Game List</h3>
-        <ul class="nav flex-column">
-            @foreach (Cluedo.Domain.Game game in GameService.Games)
+<div class="row g-0 pb-2">
+    <h5>Game List</h5>
+    <div class="col-12 container-fluid">
+        <div class="row g-2 justify-content-center">
+            @foreach (Game game in GameService.Games)
             {
-                string link = $"games/{game.Id}";
-                <li class="nav-item">
-                    <span class="oi oi-person" aria-hidden="true"></span> @game.Id
-                    <button class="btn btn-danger" @onclick="()=>RemoveGame(game.Id)">Remove Game</button>
-                </li>
+                <div class="col">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Game status: @game.Status</h5>
+                            <p class="card-text">Id: @game.Id</p>
+                            <ul>
+                                @foreach (Player player in game.Players)
+                                {
+                                    <li>@player.Name</li>
+                                }
+                            </ul>
+                            <button class="btn btn-danger" @onclick="()=>RemoveGame(game.Id)">Stop</button>
+                        </div>
+                    </div>
+                </div>
             }
-        </ul>
+        </div>
     </div>
 </div>
 
+
+
 @code {
+
+
     protected async Task RemoveGame(string gameId)
     {
         GameService.DemolishGame(gameId);

@@ -11,7 +11,7 @@ public class MachinePlayer : IDisposable
     {
         this.player = player;
         this.player.MachineToResponseEvent += MachineRespose;
-        timer = new System.Timers.Timer(5000);
+        timer = new System.Timers.Timer(4000);
     }
 
     public void MachineRespose(object? sender, EventArgs e)

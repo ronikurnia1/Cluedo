@@ -23,10 +23,12 @@ public class Game : IDisposable
         CurrentQuestionCards = new List<Card>().AsReadOnly();
         secretEnvelope = GenerateSecretEnvelope(distributedCards);
         ClueMode = ClueModes.WaitForClue;
-        timer = new System.Timers.Timer(4000);
+        timer = new System.Timers.Timer(3000);
+        Status = "Waiting";
     }
 
     public string Id => id;
+    public string Status { get; private set; }
     public string RegisterPlayer(string playerName)
     {
         Player player;
@@ -132,6 +134,8 @@ public class Game : IDisposable
         CurrentAskingClue = players.OrderBy(p => p.SequenceNo).First();
         CurrentAskingClue.RequestToAction(PlayingStates.AskingForClue, "Your turn to ask a clue or accuse");
         ClueMode = ClueModes.WaitForClue;
+        Status = "Playing";
+
         logger.LogInformation("Game started.");
         logger.LogInformation("Player [{sequenceNo}]-[{playerName}] to ask for clue",
             CurrentAskingClue?.SequenceNo, CurrentAskingClue?.Name);
@@ -382,7 +386,7 @@ public class Game : IDisposable
             Parallel.ForEach(players.Where(p => p.Id != Winner?.Id).ToList(),
                 i => i.RequestToAction(PlayingStates.Lose,
                 $"Sorry! but {Winner?.Name} has win the game!"));
-
+            Status = "Ended";
             logger.LogInformation("Game has ended");
             StateChangedEvent?.Invoke(this, EventArgs.Empty);
         }
