@@ -395,7 +395,7 @@ public class Game : IDisposable
                 $"Sorry you lose, but the correct answer are: {string.Join(", ", secretEnvelope.Select(p => p.Name))}");
 
             Parallel.ForEach(players.Where(p => p.Id != accusingPlayer?.Id).ToList(),
-                i => i.GiveGameInfo($"player {accusingPlayer?.Name} LOSES the game!"));
+                i => i.GiveGameInfo($"{accusingPlayer?.Name} LOSES the game!"));
 
             StateChangedEvent?.Invoke(this, EventArgs.Empty);
 
