@@ -42,7 +42,7 @@
                         <DataAnnotationsValidator />
                         <ValidationSummary />
                         <div class="form-group pt-3">
-                            <button type="submit" class="btn btn-primary">Join</button>
+                            <button type="submit" class="btn btn-primary">Join the game</button>
                         </div>
                     </EditForm>
                 </div>
@@ -50,7 +50,7 @@
         </div>
     </div>
     <div class="row g-2">
-        <div class="col-12">
+        <div class="col-12 p-3">
             @if (game != null && game.Players.Count > 0 && game.Players.Count < 4)
             {
                 <button type="button" @onclick="PlayWithMachine" class="btn btn-primary">Play with machine(s)</button>

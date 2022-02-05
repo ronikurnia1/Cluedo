@@ -42,10 +42,10 @@ public class Game : IDisposable
         return player.Id;
     }
     public ReadOnlyCollection<Card> SecretEnvelope => secretEnvelope.AsReadOnly();
-    public ReadOnlyCollection<Card> SuspectCovers => new List<Card>(){
-        new Card(19, "Suspect", CardTypes.Actor),
-        new Card(19, "Suspect", CardTypes.Weapon),
-        new Card(19, "Suspect", CardTypes.Place),
+    public static ReadOnlyCollection<Card> SuspectCovers => new List<Card>(){
+        new Card(20, "Suspect", CardTypes.Actor),
+        new Card(30, "Suspect", CardTypes.Weapon),
+        new Card(40, "Suspect", CardTypes.Place),
     }.AsReadOnly();
 
     public ReadOnlyCollection<Card> CurrentQuestionCards { get; private set; }

@@ -1,21 +1,20 @@
 ﻿@page "/games/{gameId}/players/{playerId}"
 @inject IGameService GameService
 @implements IDisposable
-@inject IToaster Toaster
+@inject IToastService toastService
 @layout GameLayout
 @inject NavigationManager NavigationManager
 
 <div class="d-flex flex-row h-100 pe-1">
-    <div class="scrolling-left ps-3 pe-3 pt-3 pb-3 left-flex">
+    <div class="left-flex scrolling-left ps-3 pe-3 pt-3 pb-3">
         <div class="row g-0 pb-4">
             <h5>Your cards</h5>
-            <div class="col-12 container-fluid">
-                <div class="row g-2 flex-row-reverse">
+            <div class="col-10 ps-2 pe-2 container-fluid">
+                <div class="row g-2">
                     @foreach (PlayingCard card in PlayingCards.Where(c => c.PlayingType == PlayingTypes.OnHand))
                     {
                         <CardView Card="@card" Size="col" OnCardChange="@CardChange" OnDragStart="@DraggingCard" />
                     }
-                    <div class="col"></div>
                 </div>
             </div>
         </div>
@@ -26,7 +25,7 @@
                 <div class="row g-2 flex-row-reverse">
                     @foreach (PlayingCard card in PlayingCards
                     .Where(c => c.PlayingType == PlayingTypes.Suspect)
-                    .OrderBy(c => c.CardType).Skip(0).Take(5))
+                    .OrderBy(c => c.No).Skip(0).Take(5))
                     {
                         <CardView Card="@card" Size="col" OnCardChange="@CardChange"
                               OnDragStart="@DraggingCard" />
@@ -40,7 +39,7 @@
                 <div class="row g-2 flex-row-reverse">
                     @foreach (PlayingCard card in PlayingCards
                     .Where(c => c.PlayingType == PlayingTypes.Suspect)
-                    .OrderBy(c => c.CardType).Skip(5).Take(5))
+                    .OrderBy(c => c.No).Skip(5).Take(5))
                     {
                         <CardView Card="@card" Size="col" OnCardChange="@CardChange"
                               OnDragStart="@DraggingCard" />
@@ -54,7 +53,7 @@
                 <div class="row g-2 flex-row-reverse">
                     @foreach (PlayingCard card in PlayingCards
                     .Where(c => c.PlayingType == PlayingTypes.Suspect)
-                    .OrderBy(c => c.CardType).Skip(10).Take(5))
+                    .OrderBy(c => c.No).Skip(10).Take(5))
                     {
                         <CardView Card="@card" Size="col" OnCardChange="@CardChange"
                               OnDragStart="@DraggingCard" />
@@ -66,11 +65,12 @@
     <div class="center-flex ps-2 pe-2 pt-3">
         <div class="col-12 container-fluid upper-row ps-2 pe-2">
             <h5>Dropped zone</h5>
-            <div class="row pb-3 g-2 drop-zone" ondragover="event.preventDefault();"
+            <div class="row pb-3 g-2 drop-zone justify-content-center" ondragover="event.preventDefault();"
                  @ondrop="DroppedCard" ondragstart="event.dataTransfer.setData('', event.target.id);">
                 @foreach (PlayingCard card in DroppedCards)
                 {
-                    <CardView Card="card" OnUndropped="@OnUndropped" DropZone=true Size="col-4" OnCardChange="@CardChange" />
+                    <CardView Card="card" OnUndropped="@OnUndropped"
+                          PlayableCard=false DropZone=true Size="col-4" OnCardChange="@CardChange" />
                 }
             </div>
             <div class="row pt-1">
@@ -131,7 +131,7 @@
             <div class="row pb-3 g-2 drop-zone">
                 @if (game != null)
                 {
-                    foreach (PlayingCard card in game.CurrentQuestionCards.ToList())
+                    foreach (PlayingCard card in game.CurrentQuestionCards.OrderBy(c=> c.No))
                     {
                         <CardView Size="col-4" Card="card" PlayableCard=false />
                     }
@@ -158,14 +158,14 @@
                     if (player?.State == PlayingStates.Lose
                     || player?.State == PlayingStates.Win)
                     {
-                        foreach (Card card in game.SecretEnvelope.OrderBy(c => c.No).ToList())
+                        foreach (Card card in game.SecretEnvelope.OrderBy(c => c.No))
                         {
                             <CardView Size="col" PlayableCard=false Card="new PlayingCard(card, PlayingTypes.OnHand)" />
                         }
                     }
                     else
                     {
-                        foreach (Card card in game.SuspectCovers.ToList())
+                        foreach (Card card in Game.SuspectCovers.OrderBy(c=> c.No))
                         {
                             <CardView Size="col" PlayableCard=false Card="new PlayingCard(card, PlayingTypes.OnHand)" />
                         }
@@ -224,7 +224,7 @@
         if (draggedCard != null
             && DroppedCards.Count() < 3)
         {
-            DroppedCards.Add(new PlayingCard(draggedCard, PlayingTypes.OnHand));
+            DroppedCards.Add(draggedCard);
             draggedCard = null;
             await InvokeAsync(StateHasChanged);
         }
@@ -238,19 +238,33 @@
 
     private async Task AskForClue()
     {
-        player?.AskClue(DroppedCards);
-        DroppedCards.Clear();
-        await Task.CompletedTask;
+        try
+        {
+            player?.AskClue(DroppedCards);
+            DroppedCards.Clear();
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowWarning(ex.Message);
+        }
     }
 
     private async Task GiveClue()
     {
-        var clueCard = DroppedCards.First();
-        player?.GiveClue(clueCard);
+        try
+        {
+            var clueCard = DroppedCards.First();
+            player?.GiveClue(clueCard);
 
-        DroppedCards.Clear();
+            DroppedCards.Clear();
 
-        await Task.CompletedTask;
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowWarning(ex.Message);
+        }
     }
 
     private async Task HaveNoClue()
@@ -267,10 +281,17 @@
 
     private async Task Accuse()
     {
-        player?.Accuse(DroppedCards);
-        AccuseCards.AddRange(DroppedCards);
-        DroppedCards.Clear();
-        await Task.CompletedTask;
+        try
+        {
+            player?.Accuse(DroppedCards);
+            AccuseCards.AddRange(DroppedCards);
+            DroppedCards.Clear();
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowWarning(ex.Message);
+        }
     }
 
     private async Task GoToHome()

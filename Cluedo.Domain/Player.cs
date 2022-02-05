@@ -8,7 +8,7 @@ public class Player
     private readonly IEnumerable<PlayingCard> cards;
     private readonly StringBuilder infoBuffer;
     private readonly System.Timers.Timer timer;
-
+    private readonly List<PlayingCard> cardsInQuestion;
     internal protected Player(string name, int seqNo,
         IEnumerable<PlayingCard> cards)
     {
@@ -21,6 +21,7 @@ public class Player
         ClueCard = null;
         infoBuffer = new StringBuilder();
         timer = new System.Timers.Timer(5000);
+        cardsInQuestion = new List<PlayingCard>();
     }
 
     public ReadOnlyCollection<PlayingCard> Cards
@@ -78,11 +79,12 @@ public class Player
         ClearCardInQuestionMarking();
     }
 
-    public void AskClue(IEnumerable<Card> cards)
+    public void AskClue(IEnumerable<PlayingCard> cards)
     {
         if (State == PlayingStates.AskingForClue)
         {
             AskedClueEventArgs eventArgs = new(cards);
+            cardsInQuestion.AddRange(cards);
             AskClueEvent?.Invoke(this, eventArgs);
         }
         else
@@ -129,6 +131,14 @@ public class Player
             // eliminate suspect card
             var suspect = cards.FirstOrDefault(c => c.No == card.No);
             if (suspect != null) suspect.Eliminate(true);
+            cardsInQuestion.Clear();
+        }
+        if (clueRound == 3 && card == null)
+        {
+            var foundCard = cardsInQuestion.First(c => c.PlayingType == PlayingTypes.Suspect);
+            cards.Where(c => c.PlayingType == PlayingTypes.Suspect && c.No != foundCard.No
+            && c.CardType == foundCard.CardType).ToList().ForEach(c => c.Eliminate(true));
+            cardsInQuestion.Clear();
         }
         infoBuffer.AppendLine(clueNote);
         ClueCard = card;

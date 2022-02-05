@@ -1,6 +1,6 @@
 using Blazored.LocalStorage;
+using Blazored.Toast;
 using Cluedo.WebApp.Services;
-using Sotsera.Blazor.Toaster.Core.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,13 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
-builder.Services.AddToaster(options =>
-{
-    options.PositionClass = Defaults.Classes.Position.BottomRight;
-    options.PreventDuplicates = false;
-    options.NewestOnTop = true;
-});
-
+builder.Services.AddBlazoredToast();
 
 builder.Services.AddSingleton<IGameService, GameService>();
 builder.Services.AddBlazoredLocalStorage();
