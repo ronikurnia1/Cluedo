@@ -22,7 +22,7 @@
         <div class="row g-0 pb-2">
             <h5>Suspect cards</h5>
             <div class="col-12 container-fluid">
-                <div class="row g-2 flex-row-reverse">
+                <div class="row g-2">
                     @foreach (PlayingCard card in PlayingCards
                     .Where(c => c.PlayingType == PlayingTypes.Suspect)
                     .OrderBy(c => c.No).Skip(0).Take(5))
@@ -50,7 +50,7 @@
 
         <div class="row g-0 pb-2">
             <div class="col-12 container-fluid">
-                <div class="row g-2 flex-row-reverse">
+                <div class="row g-2">
                     @foreach (PlayingCard card in PlayingCards
                     .Where(c => c.PlayingType == PlayingTypes.Suspect)
                     .OrderBy(c => c.No).Skip(10).Take(5))
