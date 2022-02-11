@@ -131,7 +131,7 @@
             <div class="row pb-3 g-2 drop-zone">
                 @if (game != null)
                 {
-                    foreach (PlayingCard card in game.CurrentQuestionCards.OrderBy(c=> c.No))
+                    foreach (PlayingCard card in game.CurrentQuestionCards.OrderBy(c => c.No))
                     {
                         <CardView Size="col-4" Card="card" PlayableCard=false />
                     }
@@ -165,7 +165,7 @@
                     }
                     else
                     {
-                        foreach (Card card in Game.SuspectCovers.OrderBy(c=> c.No))
+                        foreach (Card card in Game.SuspectCovers.OrderBy(c => c.No))
                         {
                             <CardView Size="col" PlayableCard=false Card="new PlayingCard(card, PlayingTypes.OnHand)" />
                         }
@@ -221,8 +221,8 @@
 
     private async Task DroppedCard()
     {
-        if (draggedCard != null
-            && DroppedCards.Count() < 3)
+        if (draggedCard != null && DroppedCards.Count() < 3
+        && !DroppedCards.Contains(draggedCard))
         {
             DroppedCards.Add(draggedCard);
             draggedCard = null;
